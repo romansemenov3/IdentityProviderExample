@@ -1,0 +1,238 @@
+openapi: 3.0.1
+info:
+  title: IdentityProvider API
+  version: 1.0.0
+servers:
+  - url: /api/identity-provider/v1
+
+paths:
+  /user:
+    post:
+      summary: Register user
+      tags:
+        - User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        409:
+          $ref: "#/components/responses/UserAlreadyExists"
+        500:
+          $ref: "#/components/responses/InternalError"
+  /user/{id}:
+    get:
+      summary: Get user
+      tags:
+        - User
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        404:
+          $ref: "#/components/responses/UserNotFound"
+        500:
+          $ref: "#/components/responses/InternalError"
+    delete:
+      summary: Delete user
+      tags:
+        - User
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        204:
+          description: OK
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalError"
+  /users/login:
+    post:
+      summary: Login by username and password
+      tags:
+        - User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormLogin"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalError"
+components:
+  responses:
+    # 0000-0999 General errors
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEntry"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEntry"
+          example:
+            code: "IP-0002"
+            title: "Unauthorized"
+            message: "Invalid credentials"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEntry"
+          example:
+            code: "IP-0003"
+            title: "Forbidden"
+            message: "Forbidden"
+    # 1000-1999 User errors
+    UserNotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEntry"
+          example:
+            code: "IP-1001"
+            title: "User not found"
+            message: "No user found by provided id"
+    UserAlreadyExists:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEntry"
+          example:
+            code: "IP-1002"
+            title: "User already exists"
+            message: "User with provided login already exists"
+    # 2000-2999 Client errors
+    ClientNotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEntry"
+          example:
+            code: "IP-2001"
+            title: "Client not found"
+            message: "No client found by provided id"
+  parameters:
+    Sort:
+      name: "sort"
+      in: query
+      description: Sort
+      schema:
+        type: array
+        items:
+          type: string
+          pattern: "(\\w+):(asc|desc)"
+      example:
+        - "name:asc"
+        - "date:desc"
+    Range:
+      name: "Range"
+      in: header
+      description: Range
+      schema:
+        type: string
+        pattern: "(\\d+)-(\\d+)"
+      example: "1-10"
+  headers:
+    Content-Range:
+      description: Content range
+      schema:
+        type: string
+        pattern: "(\\d+)-(\\d+)/(\\d+)"
+        example: "1-10/57"
+  schemas:
+    UUID:
+      type: string
+      pattern: "[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}"
+      example: "6a2f41a3-c54c-fce8-32d2-0324e1c32e22"
+    ErrorEntry:
+      type: object
+      properties:
+        code:
+          type: string
+          pattern: "IP\\-[0-9]{4}"
+          example: "IP-0001"
+        title:
+          type: string
+          example: "Unexpected error"
+        message:
+          type: string
+          example: "<Reason_here>"
+    User:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        grants:
+          type: array
+          items:
+            type: string
+          example:
+            - "ROLE_USER_MANAGER"
+        login:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "admin"
+    FormLogin:
+      type: object
+      properties:
+        login:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "admin"
+        client_id:
+          $ref: "#/components/schemas/UUID"
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "<JWT_here>"
+        token_type:
+          type: string
+          example: "bearer"
+        expires_in:
+          type: number
+          example: 7200000

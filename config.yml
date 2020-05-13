@@ -1,0 +1,7 @@
+port: 8100
+
+database:
+  url: postgresql://postgres:postgres@localhost/identity_provider
+
+auth:
+  secret: 93974e73a09ab1973244ba2d00dee99b8ef1d03a6c71884b1e7f0c3e9a1bcfb9f298a5d14b7b5f47a5b83bcaac51f57bd7164990df5711e11586a6c3fb816976
